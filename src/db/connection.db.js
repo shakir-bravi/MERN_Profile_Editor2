@@ -12,7 +12,7 @@ export const DBConnection = async () => {
 
     } catch (error) {
         
-        console.log(chalk.bgRed(" :) DataBase Connection Failed !!")) , chalk.red(error);
+        console.log(chalk.bgRed(" :) DataBase Connection Failed !!" , error)) 
         
     }
     

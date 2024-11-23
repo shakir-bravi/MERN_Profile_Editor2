@@ -7,22 +7,22 @@ const userSchema = new mongoose.Schema(
         name:{
             type: String,
             trim:true,
-            loweercase: true ,
+            lowercase: true ,
         },
         username:{
             type: String,
             trim:true,
-            loweercase: true ,
+            lowercase: true ,
         },
         cast:{
             type: String,
             trim:true,
-            loweercase: true ,
+            lowercase: true ,
         },
         fullname:{
             type: String,
             trim:true,
-            loweercase: true ,
+            lowercase: true ,
         },
         avatar:{
             type:String
@@ -74,7 +74,10 @@ const userSchema = new mongoose.Schema(
         
      })
 userSchema.pre("save" , async function (next) {
-    this.fullname = `${this.name}_${this.cast}`
+    if(this.name && this.cast){
+        this.fullname = `${this.name}_${this.cast}`
+        next()
+    }
     next()
     
 })
