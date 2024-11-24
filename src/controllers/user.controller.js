@@ -5,6 +5,31 @@ import { asyncHandler } from "../utils/asynchandler.utils.js";
 import { uploadOnCloudinary } from "../utils/uploadoncloudinary.utils.js";
 
 
+
+const generateAccessAndRefreshToken = async (userId)=>{
+    try {
+        // find User 
+        // generate access and refreshToken
+        // update the field of refretokn from database .save()
+        // return access tokn and refrshtokn
+
+
+        const findUser  =  await User.findById(userId) ; 
+        const generateDAccessToken = await findUser.generateAccessToken ();
+        const generateDRefrshToken = await findUser.generateRefreshToken ()  ;
+        findUser.refreshToken = generateDRefrshToken ; 
+
+        await findUser.save({validateBeforeSave:false})
+
+        return { generateDAccessToken , generateDRefrshToken}
+        
+    } catch (error) {
+        
+
+throw  new APIEError("ERROR While GENErate Acceess and Refresh Token" , 403)
+    }
+}
+
 const Register = asyncHandler(async function (req,res) {
     console.log(req.url);
     // get Data --> text Data
@@ -99,5 +124,74 @@ if(!findUser){
     
 })
 
+const logInUser = asyncHandler( async (req,res,_)=>{
+    console.log(req.url);
+    // get data 
+    // check for empty fileds
+    // findOne in Db email and username
+    // are password and confim are same
+    // cpmare the hashd and plain password and confirm password 
+    // generate tokens 
+    // send cookies 
 
-export {Register}
+
+
+    // get data 
+const {username , email , password , confirmPassword} = req.body; 
+console.log(username , email , password , confirmPassword);
+
+    // check for empty fileds
+const requiredFields = ["username", "email" , "password", "confirmPassword"]
+for(let  field of requiredFields){
+    if(!req.body[field]){
+        throw new APIEError(`${field} is Required !!!! ` , 403)
+    }
+}
+
+
+    // are password and confim are same
+    if(password != confirmPassword){
+        throw new APIEError("password And Confirm Passwords Are Not Matched")
+    }
+    // findOne in Db email and username
+const findUser =await User.findOne({ $and : [ { username}  ,{email }] })
+
+// console.log(findUser);
+
+if(!findUser){
+    throw new APIEError("Sorry You Are not Sighn Up/ Registeered !!! First Registr Then Login" , 401)
+}
+
+    // cpmare the hashd and plain password and confirm password 
+const isPasswordValid = await findUser.isPasswordCorrect(password)
+const isConfirmPasswordValid = await findUser.isConfirmPasswordCorrect(confirmPassword) 
+
+console.log(isConfirmPasswordValid,isPasswordValid);
+
+if(!isPasswordValid || !isConfirmPasswordValid ){
+    throw new APIEError("Passsword And Confirm Password Are Not Valid" , 404)
+}
+
+const {generateDAccessToken, generateDRefrshToken} = await generateAccessAndRefreshToken(findUser._id)
+console.log(generateDAccessToken,generateDRefrshToken);
+
+const options = {
+    httpOnly : true,
+    secure: true
+}
+
+
+const loggedInUser = await User.findById(findUser._id).select("-refreshToken -password -confirmPassword")
+
+    res
+    .status(200)
+    .cookie("accessToken" , generateDAccessToken , options)
+    .cookie("refreshToken" , generateDRefrshToken, options)
+    .json(
+        new APIResponse( "User LogIN Completed Success Fully !!" , { loggedInUser} , 201)
+    )
+    
+})
+
+
+export {Register , logInUser}
