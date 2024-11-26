@@ -194,4 +194,40 @@ const loggedInUser = await User.findById(findUser._id).select("-refreshToken -pa
 })
 
 
-export {Register , logInUser}
+const logOutUser  = asyncHandler( async (req,res)=>{
+    console.log(req.url);
+    // get the req.user
+    // $unset the refrshToken
+    // clearCookie()
+
+const usrId = req.user?._id ; 
+
+ const loggedOutUser = await User.findByIdAndUpdate( usrId,  { 
+    $unset :{
+        refreshToken : "" ,
+    }
+} , {
+    new : true , 
+})
+
+
+const options = {
+    httpOnly:true , 
+    secure :true
+}
+
+
+
+
+
+    res
+    .status(200)
+    .clearCookie("accessToken" , options)
+    .clearCookie("refreshToken" , options)
+    .json(
+        new APIResponse("User Logged In Succeess Fully !!" , {} , 202)
+    )
+    
+})
+
+export {Register , logInUser ,logOutUser}
