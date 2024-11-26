@@ -216,10 +216,6 @@ const options = {
     secure :true
 }
 
-
-
-
-
     res
     .status(200)
     .clearCookie("accessToken" , options)
@@ -230,4 +226,85 @@ const options = {
     
 })
 
-export {Register , logInUser ,logOutUser}
+const getUser = asyncHandler ( async (req,res) =>{
+    console.log(req.url);
+
+const user = req.user ;
+
+    res
+    .status(200)
+    .json(
+        new APIResponse("User Fetched Succeess Fully !!" , {user} , 203)
+    )
+    
+})
+
+const changePassword = asyncHandler( async (req,res) =>{
+    console.log(req.url);
+
+
+// verifyJWT 
+// findUser 
+// get Data - password confimPassword
+// empty Validation 
+// check password and confirmPassword are eqaul -- same
+// check hashed and palin password
+// findUser.password = newPassword  ;;; findUSer.save() ; 
+
+
+
+const userId = req.user?._id
+console.log(userId);
+const  findUser = await User.findById(userId)
+// get Data - password confimPassword--new & old
+let {oldPassword,oldConfirmPassword , newPassword , newConfirmPassword} = req.body ; 
+console.log(oldPassword , oldConfirmPassword , newPassword , newConfirmPassword);
+const requiredFields = ["oldPassword" , "oldConfirmPassword" , "newPassword" , "newConfirmPassword"]
+
+for(let field of requiredFields){
+    if(!req.body[field]){
+        throw new APIEError(`${field} is Required :)` , 403)   }
+}
+
+if(newPassword !== newConfirmPassword){
+    throw new APIEError("newPassword and newConfirmPasswword are not Matched") 
+}
+
+if(oldPassword !== oldConfirmPassword){
+    throw new APIEError("oldPassword and Confirm Passwword are not Matched") 
+}
+
+const isoldPasswordValid = await findUser.isPasswordCorrect(oldPassword) ; 
+const isoldConfirmPasswordValid  = await findUser.isConfirmPasswordCorrect(oldConfirmPassword) 
+console.log(isoldConfirmPasswordValid , isoldPasswordValid);
+
+
+if(!isoldPasswordValid || !isoldConfirmPasswordValid){
+    throw new APIEError("oldPassword And Confirm Old Passwords Are not Valid :))" , 404)
+}
+
+
+
+findUser.password = newPassword ; 
+findUser.confirmPassword = newConfirmPassword ; 
+
+await findUser.save({validateBeforeSave : false})
+    // console.log(findUser); 
+
+    // password
+    // "$2b$10$5h8fRskEmFXPVHZvFxMZpemdjOsG6vjomE9KaLB/v8bcnfdKAIq42"
+    // confirmPassword
+    // "$2b$10$fT4lvop5G4ubj.GXajA/qerxmnVxz.2z.IP6hE8RBQL7l9mtrUMGa"
+    
+
+    res
+    .status(200)
+    .json(
+        new APIResponse("User Password Changed Success Fully " , {} , 201)
+    )
+    
+})
+
+
+
+export {Register , logInUser ,logOutUser , getUser , changePassword}  
