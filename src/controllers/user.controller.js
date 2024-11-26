@@ -287,16 +287,8 @@ if(!isoldPasswordValid || !isoldConfirmPasswordValid){
 
 findUser.password = newPassword ; 
 findUser.confirmPassword = newConfirmPassword ; 
-
 await findUser.save({validateBeforeSave : false})
     // console.log(findUser); 
-
-    // password
-    // "$2b$10$5h8fRskEmFXPVHZvFxMZpemdjOsG6vjomE9KaLB/v8bcnfdKAIq42"
-    // confirmPassword
-    // "$2b$10$fT4lvop5G4ubj.GXajA/qerxmnVxz.2z.IP6hE8RBQL7l9mtrUMGa"
-    
-
     res
     .status(200)
     .json(
@@ -307,4 +299,79 @@ await findUser.save({validateBeforeSave : false})
 
 
 
-export {Register , logInUser ,logOutUser , getUser , changePassword}  
+
+const chnageImages =  asyncHandler (async (req,res) =>{
+    console.log(req.url);
+
+    // verifyJWT
+    // get files
+    // upload the images get URL
+    // filter provided images
+    // set the values
+    const userId = req.user?._id ; 
+    console.log(userId);
+
+
+    
+    let newAvatar  ;
+    if(req.files.newAvatar){
+        newAvatar = req.files?.newAvatar[0].path; 
+    }else { newAvatar = undefined}
+
+    let newCoverImage ;
+
+    if(req.files.newCoverImage){
+newCoverImage  = req.files?.newCoverImage[0]?.path
+    }else { newCoverImage = undefined}
+
+let newAvatarURL ; 
+let newCoverImageURL ; 
+
+if(newAvatar){
+newAvatarURL = await uploadOnCloudinary(newAvatar)
+}
+
+if(newCoverImage){
+    newCoverImageURL = await uploadOnCloudinary(newCoverImage)
+}
+
+
+const providedImages = {} ; 
+
+if(newAvatarURL) providedImages.avatar = newAvatarURL ; 
+if(newCoverImageURL) providedImages.coverImage = newCoverImageURL;
+
+console.log(providedImages);
+
+
+const UserImagesUpdated = await User.findByIdAndUpdate(userId ,
+     {
+        $set : { ...providedImages}
+     }
+      ,{new :true}) .select("-password -confirmPassword -refreshToken")
+
+
+
+
+
+    // let newCoverImage =
+    console.log(newAvatarURL  ,newCoverImageURL);
+    
+    
+
+
+    
+
+
+
+    res
+    .status(200)
+    .json(
+        new APIResponse("Images are chnaged " , {UserImagesUpdated} , 202)
+    )
+})
+
+
+
+
+export {Register , logInUser ,logOutUser , getUser , changePassword  , chnageImages}   
